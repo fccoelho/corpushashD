@@ -1,0 +1,12 @@
+{
+	"name": "hashcorpus_d",
+	"authors": [
+		"Flávio C. Coelho"
+	],
+	"dependencies": {
+		"pyd": "~>0.9.9"
+	},
+	"description": "D implementation of python hashcorpus",
+	"copyright": "Copyright © 2017, Flávio C. Coelho",
+	"license": "GPL3"
+}
