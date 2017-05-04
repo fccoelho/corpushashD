@@ -25,7 +25,7 @@ class HashCorpus
     string encoding;
     int salt_length;
     dictionary encode_dictionary;
-    dictionary decode_dictionary;
+    Tuple!(string,string)[string] decode_dictionary;
     string encode_dictionary_path;
     string decode_dictionary_path;
 
@@ -72,7 +72,7 @@ class HashCorpus
         }
         else
         {
-            res = hash_token(token, hash_function=this.hash_function, salt_length=this.salt_length);
+            auto res = hash_token(token, hash_function=this.hash_function, salt_length=this.salt_length);
             hashed_token = res[0];
             salt = res[1];
 
@@ -88,11 +88,11 @@ class HashCorpus
         return hashed_token;
     }
 
-    auto _hash_document(T)(T input_document, document output_document)
+    document _hash_document(document input_document, document output_document)
     {
         foreach (ix, item ;input_document)
         {
-            if (typeof(item) == string)
+            if (typeof(item) is string)
             {
                 output_document[ix] = this._encode_token(item);
             }
