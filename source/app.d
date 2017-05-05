@@ -114,7 +114,9 @@ class HashCorpus
     {
         if (isValidFilename(this.encode_dictionary_path) && isValidFilename(this.decode_dictionary_path))
         {
-
+        writeln("Dictionaries from previous hashing found.\n Loading them.");
+        auto f = File(this.encode_dictionary_path);
+        data = f.readf();
         }
     }
 }
@@ -129,11 +131,13 @@ auto hash_token(string token, string hash_function, ubyte[] salt=null, uint salt
     ubyte[] token_digest = token_hasher.digest(token + salt);
     return tuple(toHexString(token_digest), salt);
 }
-
-auto get_salt(uint siz=32)
+/**
+*  Random salt generator
+*/
+dchar get_salt(in uint siz)
 {
-    auto asciiLetters = to!(dchar[])(letters);
-    auto asciiDigits = to!(dchar[])(digits);
+    dchar[] asciiLetters = to!(dchar[])(letters);
+    dchar[] asciiDigits = to!(dchar[])(digits);
     dchar[siz] salt;
     fill(salt[], randomCover(chain(asciiLetters, asciiDigits), rndGen));
     return salt;
