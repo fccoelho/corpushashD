@@ -8,5 +8,9 @@
 	},
 	"description": "D implementation of python hashcorpus",
 	"copyright": "Copyright © 2017, Flávio C. Coelho",
-	"license": "LGPL3"
+	"license": "LGPL3",
+    "sourcePaths": [
+        "source/",
+        "source/corpushash/"
+    ]
 }
