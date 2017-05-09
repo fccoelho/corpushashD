@@ -8,5 +8,5 @@
 	},
 	"description": "D implementation of python hashcorpus",
 	"copyright": "Copyright © 2017, Flávio C. Coelho",
-	"license": "GPL3"
+	"license": "LGPL3"
 }

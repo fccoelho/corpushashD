@@ -38,6 +38,7 @@ class HashCorpus
     {
     this.corpus = corpus;
     this.corpus_path = corpus_path;
+    this.setup_corpus_path();
     this.encoding = encoding;
     this.hash_function = hash_function;
     this.salt_length = salt_length;
@@ -49,6 +50,19 @@ class HashCorpus
     this.hash_corpus();
 
     }
+    ///Sets up the output path
+    void setup_corpus_path()
+    {
+        writefln("setting up output directory on: %s",getcwd());
+        if (!this.corpus_path.exists)
+        {
+            string pub = buildPath(this.corpus_path, "public");
+            string priv = buildPath(this.corpus_path, "private");
+            mkdirRecurse(pub);
+            mkdirRecurse(priv);
+        }            
+    }    
+    ///Hashes the corpus
     void hash_corpus()
     {
         uint ix = 0;
@@ -65,6 +79,7 @@ class HashCorpus
         writefln("%s documents hashed and saved to %s.", ix+1, buildPath(this.corpus_path, "public"));
     }
 
+    ///Encodes one token
     dstring _encode_token(dstring token)
     {
         string hashed_token;
@@ -128,7 +143,7 @@ class HashCorpus
 
     auto _load_dictionaries()
     {
-        if (isValidFilename(this.encode_dictionary_path) && isValidFilename(this.decode_dictionary_path))
+        if (this.encode_dictionary_path.exists && this.decode_dictionary_path.exists)
         {
         writeln("Dictionaries from previous hashing found.\n Loading them.");
         JSONValue encode_dictionary = this.encode_dictionary_path.readText.parseJSON;
@@ -179,8 +194,14 @@ dstring get_salt(uint siz)
     return to!dstring(randomSample(unichars, siz));
 }
 
+unittest
+{
+    document[] corp = [["asdahsk", "sdlfjsldj","çsldkfçk"],["sdjçlkj","sadjfl"],["sdfçls","oirgk", "sdkfj"]]; 
+    HashCorpus H = new HashCorpus(corp, "teste");
+    assert("asdahsk" in H.encode_dictionary);
+}
+
 void main()
 {
-	writeln("Edit source/app.d to start your project.");
     writeln(get_salt(32));
 }
