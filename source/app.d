@@ -4,20 +4,18 @@ import std.digest.sha;
 import std.base64;
 import std.path: buildPath, isValidFilename;
 import std.format;
-import std.algorithm : fill;
-import std.ascii : letters, digits;
+import std.uni;
 import std.conv : to;
-import std.random : randomCover, rndGen;
+import std.random : randomSample;
 import std.range : chain;
 import std.typecons: tuple, Tuple;
 import std.file;
 import std.json;
+import std.traits;
 
-alias SHA256 = SHA256Digest;
-alias dictionary = string[string];
-alias Ddictionary = string[2][string];
-
-alias document = string[];
+alias dictionary = dstring[string];
+alias Ddictionary = dstring[2][string];
+alias document = dstring[];
 
 
 class HashCorpus
@@ -25,21 +23,23 @@ class HashCorpus
     document[] corpus;
     string corpus_path;
     string encoding;
-    int salt_length;
+    uint salt_length;
     dictionary encode_dictionary;
     Ddictionary decode_dictionary;
     string encode_dictionary_path;
     string decode_dictionary_path;
+    string hash_function;
 
     this(document[] corpus,
         in string corpus_path,
-        in string encoding="utf-8",
+        in string encoding="utf-32",
         in string hash_function="sha256",
-        in int salt_length=32)
+        in uint salt_length=32)
     {
     this.corpus = corpus;
     this.corpus_path = corpus_path;
     this.encoding = encoding;
+    this.hash_function = hash_function;
     this.salt_length = salt_length;
     this.encode_dictionary_path = buildPath(this.corpus_path, "private/encode_dictionary.pkl");
     this.decode_dictionary_path = buildPath(this.corpus_path, "private/decode_dictionary.pkl");
@@ -65,64 +65,64 @@ class HashCorpus
         writefln("%s documents hashed and saved to %s.", ix+1, buildPath(this.corpus_path, "public"));
     }
 
-    auto _encode_token(string token)
+    dstring _encode_token(dstring token)
     {
         string hashed_token;
-        string salt;
+        dstring salt;
 
-        if (token in this.encode_dictionary)
+        if (to!string(token) in this.encode_dictionary)
         {
-            return this.encode_dictionary[token];
+            return this.encode_dictionary[to!string(token)];
         }
         else
         {
-            auto res = hash_token(token, hash_function=this.hash_function, salt_length=this.salt_length);
+            auto res = hash_token(token, hash_function=this.hash_function);
             hashed_token = res[0];
             salt = res[1];
 
             while (hashed_token in this.decode_dictionary)
             {
-                res = hash_token(token, hash_function=this.hash_function, salt_length=this.salt_length);
+                res = hash_token(token, hash_function=this.hash_function);
                 hashed_token = res[0];
                 salt = res[1];
             }
             this.decode_dictionary[hashed_token] = [token, salt];
-            this.encode_dictionary[token] = hashed_token;
+            this.encode_dictionary[to!string(token)] = to!dstring(hashed_token);
         }
-        return hashed_token;
+        return to!dstring(hashed_token);
     }
 
     document _hash_document(document input_document, document output_document)
     {
         foreach (ix, item ;input_document)
         {
-            if (typeof(item) is string)
+            if (isSomeString!(typeof(item)))
             {
-                output_document[ix] = this._encode_token(item);
+                output_document[ix] = to!dstring(this._encode_token(item));
             }
             else
             {
-                output_document[ix] = this._hash_document(item, output_document[ix]);
+                throw new FileException("Document must be a list of strings");
             }
         }
 
         return output_document;
     }
 
-    auto _export_dictionary(dictionary file_to_dump, string file_path)
+    void _export_dictionary(dictionary file_to_dump, string file_path)
     {
-        auto payload = JSONValue(file_to_dump);
+        JSONValue payload = JSONValue(file_to_dump);
         File(file_path, "w").write(payload.toJSON);
     }
-    auto _export_Ddictionary(Ddictionary file_to_dump, string file_path)
+    void _export_Ddictionary(Ddictionary file_to_dump, string file_path)
     {
-        auto payload = JSONValue(file_to_dump);
+        JSONValue payload = JSONValue(file_to_dump);
         File(file_path, "w").write(payload.toJSON);
     }
     
     void _export_encoded_document(document doc_to_dump, string file_path)
     {
-        auto payload = JSONValue(doc_to_dump);
+        JSONValue payload = JSONValue(doc_to_dump);
         File(file_path, "w").write(payload.toJSON);
     }    
 
@@ -137,7 +137,7 @@ class HashCorpus
         else
         {
             dictionary encode_dictionary;
-            Tuple!(string,string)[string] decode_dictionary;
+            Tuple!(dstring,dstring)[string] decode_dictionary;
             try{
                 mkdir(buildPath(this.corpus_path, "private"));            
             }
@@ -158,26 +158,25 @@ class HashCorpus
 *   salt = Salt to add
 *   salt_length = Length of the salt in bits
 */
-auto hash_token(string token, string hash_function, dchar[] salt=null, uint salt_length=32)
+auto hash_token(dstring token, string hash_function, dstring salt=null, uint salt_length=32)
 {
     if (salt is null)
     {
        salt = get_salt(salt_length);
     }
-    auto token_hasher = SHA256();
-    ubyte[] token_digest = token_hasher.digest(token + salt);
+    auto token_hasher = new SHA256Digest();
+    ubyte[] token_digest = token_hasher.digest(token ~ salt);
     return tuple(toHexString(token_digest), salt);
 }
 /**
 *  Random salt generator
 */
-dchar[] get_salt(uint siz)
+dstring get_salt(uint siz)
 {
-    dchar[] asciiLetters = to!(dchar[])(letters);
-    dchar[] asciiDigits = to!(dchar[])(digits);
-    dchar[siz] salt;
-    fill(salt[], randomCover(chain(asciiLetters, asciiDigits), rndGen));
-    return salt;
+    auto unicodechars = unicode("Cyrillic") | unicode("Armenian") | unicode("Telugu");
+    dstring unichars =  to!(dstring)(unicodechars.byCodepoint);
+
+    return to!dstring(randomSample(unichars, siz));
 }
 
 void main()
