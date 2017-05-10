@@ -1,12 +1,12 @@
 {
-	"name": "hashcorpus_d",
+	"name": "corpushash_d",
 	"authors": [
 		"Flávio C. Coelho"
 	],
 	"dependencies": {
 		"pyd": "~>0.9.9"
 	},
-	"description": "D implementation of python hashcorpus",
+	"description": "D implementation of python corpushash",
 	"copyright": "Copyright © 2017, Flávio C. Coelho",
 	"license": "LGPL3",
     "sourcePaths": [

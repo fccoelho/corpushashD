@@ -14,6 +14,7 @@ import std.typecons: tuple, Tuple;
 import std.file;
 import std.json;
 import std.traits;
+import std.datetime;
 
 alias dictionary = dstring[string];
 alias Ddictionary = dstring[2][string];
@@ -24,6 +25,7 @@ class HashCorpus
 {
     document[] corpus;
     string corpus_path;
+    string public_path;
     string encoding;
     uint salt_length;
     dictionary encode_dictionary;
@@ -40,12 +42,12 @@ class HashCorpus
     {
     this.corpus = corpus;
     this.corpus_path = corpus_path;
-    this.setup_corpus_path();
+    this.public_path = this.setup_corpus_path();
     this.encoding = encoding;
     this.hash_function = hash_function;
     this.salt_length = salt_length;
-    this.encode_dictionary_path = buildPath(this.corpus_path, "private/encode_dictionary.json");
-    this.decode_dictionary_path = buildPath(this.corpus_path, "private/decode_dictionary.json");
+    this.encode_dictionary_path = buildPath(this.corpus_path, "private", "encode_dictionary.json");
+    this.decode_dictionary_path = buildPath(this.corpus_path, "private", "decode_dictionary.json");
     auto dicts = this._load_dictionaries();
     this.encode_dictionary = dicts[0]; 
     this.decode_dictionary = dicts[1]; 
@@ -53,17 +55,20 @@ class HashCorpus
 
     }
     ///Sets up the output path
-    void setup_corpus_path()
+    string setup_corpus_path()
     {
-        writefln("setting up output directory on: %s",getcwd());
-        if (!this.corpus_path.exists)
+        writefln("setting up output directory on: %s", this.corpus_path);
+        auto currentTime = Clock.currTime();
+        string timeString = currentTime.toISOString();
+        string public_path = buildPath(this.corpus_path, "public", timeString);
+        mkdirRecurse(public_path);
+        string priv = buildPath(this.corpus_path, "private");
+        if (!priv.exists)
         {
-            string pub = buildPath(this.corpus_path, "public");
-            string priv = buildPath(this.corpus_path, "private");
-            mkdirRecurse(pub);
             mkdirRecurse(priv);
-        }            
-    }    
+        }
+        return public_path;
+    }
     ///Hashes the corpus
     void hash_corpus()
     {
@@ -72,24 +77,26 @@ class HashCorpus
         {
             document output_document = doc.dup; // copying here because the next method is recursive
             document encoded_document = this._hash_document(doc, output_document);
-            auto encoded_document_path = buildPath(this.corpus_path, "public", format!"%s.json"(i,));
+            auto encoded_document_path = buildPath(this.public_path, format!"%s.json"(i,));
             this._export_encoded_document(encoded_document, encoded_document_path);
             ix += i;
         }
         this._export_dictionary(this.encode_dictionary, this.encode_dictionary_path);
         this._export_Ddictionary(this.decode_dictionary, this.decode_dictionary_path);
-        writefln("%s documents hashed and saved to %s.", ix+1, buildPath(this.corpus_path, "public"));
+        writefln("%s documents hashed and saved to %s.", ix+1, this.public_path);
     }
 
     ///Encodes one token
     dstring _encode_token(dstring token)
     {
+        string token_str;
         string hashed_token;
         dstring salt;
-
-        if (to!string(token) in this.encode_dictionary)
+        
+        token_str = to!string(token);
+        if (token_str in this.encode_dictionary)
         {
-            return this.encode_dictionary[to!string(token)];
+            return this.encode_dictionary[token_str];
         }
         else
         {
@@ -104,7 +111,7 @@ class HashCorpus
                 salt = res[1];
             }
             this.decode_dictionary[hashed_token] = [token, salt];
-            this.encode_dictionary[to!string(token)] = to!dstring(hashed_token);
+            this.encode_dictionary[token_str] = to!dstring(hashed_token);
         }
         return to!dstring(hashed_token);
     }
@@ -155,13 +162,6 @@ class HashCorpus
         {
             dictionary encode_dictionary;
             Tuple!(dstring,dstring)[string] decode_dictionary;
-            try{
-                mkdir(buildPath(this.corpus_path, "private"));            
-            }
-            catch (FileException e){
-                writeln(e);
-            }            
-            
         }
         return tuple(encode_dictionary, decode_dictionary);
     }
