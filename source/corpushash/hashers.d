@@ -44,8 +44,8 @@ class HashCorpus
     this.encoding = encoding;
     this.hash_function = hash_function;
     this.salt_length = salt_length;
-    this.encode_dictionary_path = buildPath(this.corpus_path, "private/encode_dictionary.pkl");
-    this.decode_dictionary_path = buildPath(this.corpus_path, "private/decode_dictionary.pkl");
+    this.encode_dictionary_path = buildPath(this.corpus_path, "private/encode_dictionary.json");
+    this.decode_dictionary_path = buildPath(this.corpus_path, "private/decode_dictionary.json");
     auto dicts = this._load_dictionaries();
     this.encode_dictionary = dicts[0]; 
     this.decode_dictionary = dicts[1]; 
