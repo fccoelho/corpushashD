@@ -15,6 +15,7 @@ import std.file;
 import std.json;
 import std.traits;
 import std.datetime;
+import pyd.pyd;
 
 alias dictionary = dstring[string];
 alias Ddictionary = dstring[2][string];
@@ -34,11 +35,8 @@ class HashCorpus
     string decode_dictionary_path;
     string hash_function;
 
-    this(document[] corpus,
-        in string corpus_path,
-        in string encoding="utf-32",
-        in string hash_function="sha256",
-        in uint salt_length=32)
+    this(document[] corpus,  string corpus_path, string encoding="utf-32", string hash_function="sha256",
+         const uint salt_length=32)
     {
     this.corpus = corpus;
     this.corpus_path = corpus_path;
@@ -195,6 +193,28 @@ dstring get_salt(uint siz)
 
     return to!dstring(randomSample(unichars, siz));
 }
+
+/**
+* Python wrapper
+*/
+extern(C) void PydMain() {
+    alias document = dstring[];
+    module_init();
+    def!(get_salt)();
+    wrap_class!(HashCorpus,
+            Property!(HashCorpus.corpus),
+            Property!(HashCorpus.corpus_path),
+            Property!(HashCorpus.encoding),
+            Property!(HashCorpus.hash_function),
+            Property!(HashCorpus.salt_length),
+            Init!(document[], string, string, string, const uint),
+            )();
+
+}
+
+/**
+* Unittests
+**/
 
 unittest
 {
