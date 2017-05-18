@@ -148,6 +148,13 @@ class HashCorpus
         File(file_path, "w").write(payload.toJSON);
     }    
 
+    /**
+     * Load prevously save dictionaries 
+     * 
+     * <detailed description>
+     *
+     * Params:
+     */
     auto _load_dictionaries()
     {
         if (this.encode_dictionary_path.exists && this.decode_dictionary_path.exists)
@@ -159,7 +166,7 @@ class HashCorpus
         else
         {
             dictionary encode_dictionary;
-            Tuple!(dstring,dstring)[string] decode_dictionary;
+            Ddictionary decode_dictionary;
         }
         return tuple(encode_dictionary, decode_dictionary);
     }
@@ -216,10 +223,27 @@ extern(C) void PydMain() {
 * Unittests
 **/
 
+/// Testing the hashing
 unittest
 {
     document[] corp = [["asdahsk", "sdlfjsldj","çsldkfçk"],["sdjçlkj","sadjfl"],["sdfçls","oirgk", "sdkfj"]]; 
     HashCorpus H = new HashCorpus(corp, "teste");
     assert("asdahsk" in H.encode_dictionary);
+}
+
+unittest
+{
+    document[] corp = [["asdahsk", "sdlfjsldj","çsldkfçk"],["sdjçlkj","sadjfl"],["sdfçls","oirgk", "sdkfj"]];
+    HashCorpus H = new HashCorpus(corp, "teste");
+    H._load_dictionaries();
+    writeln(H.encode_dictionary["çsldkfçk"]);
+    assert(H.encode_dictionary["asdahsk"] );
+    assert(isAssociativeArray!(typeof(H.decode_dictionary)));
+    foreach(key, val; H.decode_dictionary)
+    {
+        assert(isSomeString!(typeof(key)));
+        assert(isArray!(typeof(val)));                
+    }        
+    
 }
 
