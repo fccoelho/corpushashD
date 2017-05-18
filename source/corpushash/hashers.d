@@ -231,10 +231,12 @@ unittest
     assert("asdahsk" in H.encode_dictionary);
 }
 
+/// Test the loading of dictionaries
 unittest
 {
     document[] corp = [["asdahsk", "sdlfjsldj","çsldkfçk"],["sdjçlkj","sadjfl"],["sdfçls","oirgk", "sdkfj"]];
     HashCorpus H = new HashCorpus(corp, "teste");
+    // Force the loading from disk again;
     H._load_dictionaries();
     writeln(H.encode_dictionary["çsldkfçk"]);
     assert(H.encode_dictionary["asdahsk"] );
