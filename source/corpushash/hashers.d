@@ -29,6 +29,7 @@ class HashCorpus
     string public_path;
     string encoding;
     uint salt_length;
+    bool loaded_dicts_from_disk = false; // overwritten by _load_dictionaries
     dictionary encode_dictionary;
     Ddictionary decode_dictionary;
     string encode_dictionary_path;
@@ -79,9 +80,11 @@ class HashCorpus
             this._export_encoded_document(encoded_document, encoded_document_path);
             ix += i;
         }
+
         this._export_dictionary(this.encode_dictionary, this.encode_dictionary_path);
         this._export_Ddictionary(this.decode_dictionary, this.decode_dictionary_path);
         writefln("%s documents hashed and saved to %s.", ix+1, this.public_path);
+
     }
 
     ///Encodes one token
@@ -94,6 +97,7 @@ class HashCorpus
         token_str = to!string(token);
         if (token_str in this.encode_dictionary)
         {
+            writeln("using existing hash");
             return this.encode_dictionary[token_str];
         }
         else
@@ -162,6 +166,7 @@ class HashCorpus
         writeln("Dictionaries from previous hashing found.\n Loading them.");
         JSONValue encode_dictionary = this.encode_dictionary_path.readText.parseJSON;
         JSONValue decode_dictionary = this.decode_dictionary_path.readText.parseJSON;
+        this.loaded_dicts_from_disk = true;
         }
         else
         {
@@ -224,27 +229,34 @@ extern(C) void PydMain() {
 **/
 
 /// Testing the hashing
-unittest
+/**unittest
 {
     document[] corp = [["asdahsk", "sdlfjsldj","çsldkfçk"],["sdjçlkj","sadjfl"],["sdfçls","oirgk", "sdkfj"]]; 
-    HashCorpus H = new HashCorpus(corp, "teste");
+    HashCorpus H = new HashCorpus(corp, "test_corpus");
     assert("asdahsk" in H.encode_dictionary);
-}
+}*/
 
 /// Test the loading of dictionaries
 unittest
 {
     document[] corp = [["asdahsk", "sdlfjsldj","çsldkfçk"],["sdjçlkj","sadjfl"],["sdfçls","oirgk", "sdkfj"]];
-    HashCorpus H = new HashCorpus(corp, "teste");
-    // Force the loading from disk again;
+    HashCorpus H = new HashCorpus(corp, "test_corpus");
+    // Make a copy of the dictionaries
+    dictionary original_enc_dict = H.encode_dictionary;
+    Ddictionary original_dec_dict = H.decode_dictionary;
+    // Force the re-loading from disk again;
     H._load_dictionaries();
-    writeln(H.encode_dictionary["çsldkfçk"]);
-    assert(H.encode_dictionary["asdahsk"] );
+    foreach(word; ["asdahsk", "sdlfjsldj","çsldkfçk","sdjçlkj","sadjfl","sdfçls","oirgk", "sdkfj"])
+    {
+        assert(original_enc_dict[word] == H.encode_dictionary[word]);
+    }
+
     assert(isAssociativeArray!(typeof(H.decode_dictionary)));
     foreach(key, val; H.decode_dictionary)
     {
         assert(isSomeString!(typeof(key)));
-        assert(isArray!(typeof(val)));                
+        assert(isArray!(typeof(val)));
+        assert(key in original_dec_dict);
     }        
     
 }
