@@ -4,13 +4,15 @@
         "Flávio C. Coelho"
     ],
     "dependencies": {
-        "pyd": "~>0.9.9"
+        "pyd": "~>0.12.0"
     },
     "description": "D implementation of python corpushash",
     "copyright": "Copyright © 2017, Flávio C. Coelho",
     "license": "LGPL3",
     "sourcePaths": [
         "source/",
-        "source/corpushash/"
-    ]
+    ],
+    "subConfigurations": {
+            "pyd": "python37",
+    }
 }

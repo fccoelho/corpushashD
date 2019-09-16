@@ -29,7 +29,6 @@ class HashCorpus
     string public_path;
     string encoding;
     uint salt_length;
-    bool loaded_dicts_from_disk = false; // overwritten by _load_dictionaries
     dictionary encode_dictionary;
     Ddictionary decode_dictionary;
     string encode_dictionary_path;
@@ -47,9 +46,10 @@ class HashCorpus
     this.salt_length = salt_length;
     this.encode_dictionary_path = buildPath(this.corpus_path, "private", "encode_dictionary.json");
     this.decode_dictionary_path = buildPath(this.corpus_path, "private", "decode_dictionary.json");
-    auto dicts = this._load_dictionaries();
-    this.encode_dictionary = dicts[0]; 
-    this.decode_dictionary = dicts[1]; 
+    this._load_dictionaries();
+    //this.encode_dictionary = dicts[0];
+    //this.decode_dictionary = dicts[1];
+    writeln(this.encode_dictionary);
     this.hash_corpus();
 
     }
@@ -95,7 +95,8 @@ class HashCorpus
         dstring salt;
         
         token_str = to!string(token);
-        if (token_str in this.encode_dictionary)
+
+        if ((token_str in this.encode_dictionary) !is null)
         {
             writeln("using existing hash");
             return this.encode_dictionary[token_str];
@@ -166,14 +167,16 @@ class HashCorpus
         writeln("Dictionaries from previous hashing found.\n Loading them.");
         JSONValue encode_dictionary = this.encode_dictionary_path.readText.parseJSON;
         JSONValue decode_dictionary = this.decode_dictionary_path.readText.parseJSON;
-        this.loaded_dicts_from_disk = true;
         }
         else
         {
             dictionary encode_dictionary;
             Ddictionary decode_dictionary;
         }
-        return tuple(encode_dictionary, decode_dictionary);
+        writeln(encode_dictionary);
+        this.encode_dictionary = encode_dictionary;
+        this.decode_dictionary = decode_dictionary;
+       // return [encode_dictionary, decode_dictionary;
     }
 }
 
