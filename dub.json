@@ -1,12 +1,13 @@
 {
-    "name": "corpushash_d",
+    "name": "corpushashD",
     "authors": [
         "Flávio C. Coelho"
     ],
     "dependencies": {
         "pyd": "~>0.12.0"
     },
-    "description": "D implementation of python corpushash",
+    "description": "D implementation of python corpushash. A library to generate hashed versions of a document corpus, to allow for secure application of text processing algorithms on sensitive documents.",
+    "homepage": "https://github.com/fccoelho/corpushashD",
     "copyright": "Copyright © 2017, Flávio C. Coelho",
     "license": "LGPL3",
     "sourcePaths": [
